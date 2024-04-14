@@ -5,8 +5,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///userdata.db'
-
 db = SQLAlchemy(app)
+app.secret_key = 'secret_key'
 
 class Users(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -17,7 +17,7 @@ class Users(db.Model):
     def __init(self, email,password, name):
         self.name = name
         self.email = email
-        self.password = generate_password_hash(password)
+        self.password = password
 
     def check_password(self,password):
         return check_password_hash(self.password, password)
@@ -31,6 +31,7 @@ with app.app_context():
 
 @app.route("/")
 def home():
+    # if session['name']:
     return "Placeholder"
 
 @app.route("/register", methods=['GET', 'POST'])
@@ -40,7 +41,7 @@ def register():
         email = request.form['email']
         password = request.form['password']
 
-        new_user = Users(name = name, email = email, password = password)
+        new_user = Users(name = name, email = email, password = generate_password_hash(password))
         db.session.add(new_user)
         db.session.commit()
         return redirect('/login')
@@ -57,12 +58,13 @@ def login():
         user = Users.query.filter_by(email=email).first()
 
         if user and user.check_password(password):
+            session['name'] = user.name
             session['email'] = user.email
             session['password'] = user.password
             return redirect('/')
         
         else:
-            return render_template('login.html', error='Invalid User')
+            return render_template('login.html', error="Invalid User")
 
-    return render_template('/')
+    return render_template('login.html')
 
