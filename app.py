@@ -1,6 +1,6 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, session
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.sql import text
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 
@@ -10,13 +10,21 @@ db = SQLAlchemy(app)
 
 class Users(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String, unique = True)
-    firstname = db.Column(db.String(200))
-    lastname = db.Column(db.String(200))
-    password = db.Column(db.String(200))
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), unique=True)
+    password = db.Column(db.String(100))
+
+    def __init(self, email,password, name):
+        self.name = name
+        self.email = email
+        self.password = generate_password_hash(password)
+
+    def check_password(self,password):
+        return check_password_hash(self.password, password)
 
     def __repr__(self):
         return f"Name : {self.firstname}, id: {self.id}"
+    
 with app.app_context():
     db.create_all()
     
@@ -28,14 +36,14 @@ def home():
 @app.route("/register", methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        firstname = request.form['firstname']
-        lastname = request.form['lastname']
+        name = request.form['name']
+        email = request.form['email']
         password = request.form['password']
 
-        new_user = Users(firstname = firstname, lastname = lastname, password = password)
+        new_user = Users(name = name, email = email, password = password)
         db.session.add(new_user)
         db.session.commit()
-        return redirect("/login")
+        return redirect('/login')
 
     return render_template('register.html')
 
@@ -43,7 +51,18 @@ def register():
 def login():
 
     if request.method == 'POST':
-        pass
+        email = request.form['email']
+        password = request.form['password']
 
-    return render_template("login.html")
+        user = Users.query.filter_by(email=email).first()
+
+        if user and user.check_password(password):
+            session['email'] = user.email
+            session['password'] = user.password
+            return redirect('/')
+        
+        else:
+            return render_template('login.html', error='Invalid User')
+
+    return render_template('/')
 
