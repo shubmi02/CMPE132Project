@@ -30,6 +30,12 @@ class Users(db.Model):
 with app.app_context():
     db.create_all()
 
+def load_user(user_id):
+    return Users.query.filter_by(username=user_id).first()
+
+def load_all_users():
+    return Users.query.all()
+
 def is_authorized(required_role):
     email = session.get('email')
     if not email:
@@ -42,8 +48,10 @@ def is_authorized(required_role):
 @app.route("/admin")
 def admin_dashboard():
     if not is_authorized('employee'):
-        return redirect("Access Denied")
-    return "Admin Dashboard"
+        return redirect('/login')
+    
+    users = load_all_users()
+    return render_template('admin.html', userlist = users)
 
 @app.route("/")
 def home():
@@ -75,7 +83,7 @@ def login():
         if user and user.check_password(password):
             session['name'] = user.name
             session['email'] = user.email
-            session['role'] = user.role  # Store role in session
+            session['role'] = user.role  
             return redirect('/')
         else:
             return render_template('login.html', error="Invalid username or password")
