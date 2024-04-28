@@ -13,12 +13,14 @@ class Users(db.Model):
     email = db.Column(db.String(100), unique=True)
     password = db.Column(db.String(100))
     role = db.Column(db.String(100), default='user')
-    
-    def __init__(self, email, password, name, role='user'):  
+    authenticate = db.Column(db.Boolean, default=False)  
+
+    def __init__(self, email, password, name, role='user', authenticate = False):  
         self.name = name
         self.email = email
         self.password = password
         self.role = role
+        self.authenticate = authenticate
 
     def check_password(self, password):
         return check_password_hash(self.password, password)
@@ -41,17 +43,43 @@ def is_authorized(required_role):
     if not email:
         return False
     user = Users.query.filter_by(email=email).first()
-    if user and user.role == required_role:
+    if user and user.role == required_role and user.authenticate == False:
         return True
     return False
 
-@app.route("/admin")
+@app.route("/admin", methods=['GET', 'POST'])
+@app.route("/admin", methods=['GET', 'POST'])
 def admin_dashboard():
     if not is_authorized('employee'):
         return redirect('/login')
     
+    if request.method == 'POST':
+        # This handles the form submission for updating authentication status
+        for key, value in request.form.items():
+            if key.startswith('authentication-'):
+                user_id = int(key.split('-')[1])
+                authenticate_value = value == 'True'
+                user = Users.query.get(user_id)
+                if user:
+                    user.authenticate = authenticate_value
+
+            elif key.startswith('role-'):
+                user_id = int(key.split('-')[1])
+                user = Users.query.get(user_id)
+                if user:
+                    user.role = value
+
+        db.session.commit()       
+        return redirect('/admin')
+    
     users = load_all_users()
-    return render_template('admin.html', userlist = users)
+    
+    # Fetch all unique roles from the database
+    roles = db.session.query(Users.role).distinct().all()
+    roles = [role[0] for role in roles]
+
+    return render_template('admin.html', userlist=users, roles=roles)
+
 
 @app.route("/")
 def home():
@@ -83,7 +111,7 @@ def login():
         if user and user.check_password(password):
             session['name'] = user.name
             session['email'] = user.email
-            session['role'] = user.role  
+            session['role'] = user.role
             return redirect('/')
         else:
             return render_template('login.html', error="Invalid username or password")

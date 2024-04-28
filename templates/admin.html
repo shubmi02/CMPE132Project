@@ -1,44 +1,58 @@
-<style>
-    table {
-    width: 100%;
-    border-collapse: collapse; /* Ensures that the border lines between cells are merged into a single line */
-    }
-
-    th, td {
-    border: 1px solid #cccccc; /* Adds a light grey border around each cell */
-    padding: 8px; /* Adds space around text in each cell */
-    text-align: left; /* Aligns text to the left */
-    }
-
-    thead {
-        background-color: #f2f2f2; /* Light grey background for header row */
-    }
-
-</style>
 <html>
-<h1>Admin Console</h1>
-<table>
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Role</th>
-        </tr>
-    </thead>
-    <tbody>
-        <!-- Assuming 'users' is passed from the Flask view -->
-        {% for eachuser in userlist %}
-        <tr>
-            <td>{{ eachuser.id }}</td>
-            <td>{{ eachuser.name }}</td>
-            <td>{{ eachuser.email }}</td>
-            <td>{{ eachuser.role }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<head>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #cccccc;
+            padding: 8px;
+            text-align: left;
+        }
+        thead {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Admin Console</h1>
+    <form action="/admin" method="post">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Authenticated?</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for eachuser in userlist %}
+                <tr>
+                    <td>{{ eachuser.id }}</td>
+                    <td>{{ eachuser.name }}</td>
+                    <td>{{ eachuser.email }}</td>
+                    <td>
+                        <select name="role-{{ eachuser.id }}">
+                            {% for role in roles %}
+                                <option value="{{ role }}" {% if eachuser.role == role %}selected{% endif %}>{{ role }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+                        <select name="authentication-{{ eachuser.id }}">
+                            <option value="True" {% if eachuser.authenticate %}selected{% endif %}>True</option>
+                            <option value="False" {% if not eachuser.authenticate %}selected{% endif %}>False</option>
+                        </select>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button type="submit" name="action" value="Update Authentication">Update Authentication</button>
+        <button type="submit" name="action" value="Update Role">Update Role</button>
+    </form>
+</body>
 </html>
-
-
-
