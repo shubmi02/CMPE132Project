@@ -1,4 +1,4 @@
-# CMPE 132 Project Implementation (Attribute Based Access Control)
+# CMPE 132 Project Implementation (Role Based Access Control)
 
 ### Activating the Virtual Enviornment
 Within the directory: .\venv\Scripts\activate
