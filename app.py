@@ -43,7 +43,7 @@ def is_authorized(required_role):
     if not email:
         return False
     user = Users.query.filter_by(email=email).first()
-    if user and user.role == required_role and user.authenticate == False:
+    if user and user.role == required_role and user.authenticate == True:
         return True
     return False
 
